@@ -1,1 +1,568 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Yapper — Chat with Friends</title>
+<style>
+:root {
+  --bg: #151321;
+  --panel: #211d32;
+  --panel2: #302747;
+  --purple: #9565f5;
+  --text: #f7f3ff;
+  --muted: #aaa1c2;
+  --border: #3b3353;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+button, input { font: inherit; }
+button { cursor: pointer; border: 0; }
+.hidden { display: none !important; }
+button.primary {
+  background: var(--purple);
+  color: white;
+  border-radius: 9px;
+  padding: 11px 15px;
+  font-weight: bold;
+}
+input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #171422;
+  color: white;
+  margin: 7px 0 14px;
+}
+.auth {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: radial-gradient(ellipse at top, #43236d, var(--bg) 65%);
+}
+.card {
+  width: min(400px, 100%);
+  background: var(--panel);
+  padding: 28px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+}
+.logo {
+  background: linear-gradient(135deg, #7c3aed, #c084fc);
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  font-size: 27px;
+  font-weight: bold;
+}
+h1 span { color: #bd9bff; }
+.muted { color: var(--muted); line-height: 1.5; }
+.tabs { display: flex; gap: 8px; margin: 20px 0; }
+.tabs button {
+  flex: 1;
+  padding: 11px;
+  background: var(--panel2);
+  color: white;
+  border-radius: 8px;
+}
+.tabs .active { background: var(--purple); }
+.error { color: #ff9bae; }
+.app { display: flex; height: 100vh; overflow: hidden; }
+.sidebar {
+  width: 260px;
+  flex-shrink: 0;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+}
+.sidehead { padding: 20px 16px; border-bottom: 1px solid var(--border); }
+.sidehead h2 { margin: 0 0 6px; }
+.sidehead small { color: var(--muted); }
+.section {
+  padding: 18px 12px 8px;
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 1px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.icon {
+  background: transparent;
+  color: #c9b4ff;
+  font-size: 20px;
+}
+.people { padding: 0 8px; overflow-y: auto; }
+.person {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px;
+  background: transparent;
+  color: white;
+  border-radius: 9px;
+  text-align: left;
+  margin-bottom: 3px;
+}
+.person:hover, .person.active { background: var(--panel2); }
+.avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: #554078;
+  display: grid;
+  place-items: center;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.userbar {
+  margin-top: auto;
+  padding: 13px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.userbar .who { flex: 1; overflow-wrap: anywhere; }
+.userbar small { display: block; color: #65e7ac; margin-top: 4px; }
+.main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: #171524;
+}
+.welcome { margin: auto; text-align: center; padding: 20px; }
+.welcome .star { font-size: 58px; color: #bd9bff; }
+.welcome p { color: var(--muted); line-height: 1.7; }
+.chat { height: 100%; display: flex; flex-direction: column; }
+.chathead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  background: var(--panel);
+  border-bottom: 1px solid var(--border);
+}
+.chathead .who { flex: 1; }
+.chathead small { display: block; color: var(--muted); margin-top: 5px; }
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.msg { display: flex; gap: 8px; max-width: 85%; align-items: flex-end; }
+.msg.mine { align-self: flex-end; flex-direction: row-reverse; }
+.msg .avatar { width: 30px; height: 30px; border-radius: 9px; }
+.meta { color: var(--muted); font-size: 10px; margin-bottom: 5px; }
+.bubble {
+  padding: 10px 13px;
+  border-radius: 4px 13px 13px 13px;
+  background: #2b2740;
+  border: 1px solid var(--border);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  line-height: 1.5;
+}
+.mine .bubble { background: #493367; border-radius: 13px 4px 13px 13px; }
+.bubble img { max-width: 100%; max-height: 250px; border-radius: 8px; }
+.composer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 14px;
+  padding: 8px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.composer input { margin: 0; border: 0; background: transparent; min-width: 0; }
+.gif { background: var(--panel2); color: white; padding: 10px; border-radius: 8px; }
+.send { background: var(--purple); color: white; padding: 11px 14px; border-radius: 8px; }
+.hint { text-align: center; color: var(--muted); font-size: 10px; }
+.modal {
+  position: fixed; inset: 0; z-index: 5;
+  background: #000b; display: grid; place-items: center; padding: 16px;
+}
+.modalbox {
+  width: min(430px, 100%);
+  max-height: 90vh; overflow: auto;
+  background: var(--panel); padding: 25px;
+  border: 1px solid var(--border); border-radius: 16px;
+}
+.modalbox h2 { margin-top: 0; }
+.modalbox label { display: block; margin-top: 12px; }
+.close { float: right; background: var(--panel2); color: white; padding: 7px 11px; border-radius: 7px; }
+.result { display: flex; align-items: center; gap: 8px; padding: 10px 0; }
+.result span { flex: 1; overflow-wrap: anywhere; }
+.notice {
+  padding: 10px; margin: 10px 0; background: #322744;
+  color: #e4d4ff; border-radius: 8px; line-height: 1.5;
+}
+@media(max-width:600px) {
+  .sidebar { width: 155px; }
+  .sidehead { padding: 14px 9px; }
+  .section { padding: 14px 6px 7px; font-size: 9px; }
+  .person { gap: 6px; padding: 8px 5px; }
+  .person .avatar { width: 29px; height: 29px; }
+  .person b { font-size: 11px; }
+  .userbar { padding: 8px 5px; gap: 5px; }
+  .userbar .avatar { width: 28px; height: 28px; }
+  .messages { padding: 12px 7px; }
+  .msg { max-width: 96%; }
+  .composer { margin: 0 5px; }
+}
+</style>
+</head>
+<body>
+
+<section id="authView" class="auth">
+  <div class="card">
+    <div class="logo">Y</div>
+    <h1>Welcome to <span>Yapper</span></h1>
+    <p class="muted">Your people. Your conversations.</p>
+    <div class="notice">
+      This standalone version saves data in this browser only.
+      It does not provide online accounts or cross-device chat.
+    </div>
+    <div class="tabs">
+      <button id="loginTab" class="active">Log in</button>
+      <button id="registerTab">Register</button>
+    </div>
+    <form id="authForm">
+      <label>Username</label>
+      <input id="username" minlength="3" maxlength="20"
+             pattern="[A-Za-z0-9_]+" placeholder="your_username" required>
+      <label id="emailLabel" class="hidden">Email</label>
+      <input id="email" class="hidden" type="email" placeholder="you@example.com">
+      <label>Password</label>
+      <input id="password" type="password" minlength="4"
+             placeholder="Password" required>
+      <button id="authSubmit" class="primary" style="width:100%">Log in</button>
+      <p id="authError" class="error"></p>
+    </form>
+  </div>
+</section>
+
+<div id="appView" class="app hidden">
+  <aside class="sidebar">
+    <header class="sidehead">
+      <h2>Yapper ✦</h2>
+      <small>YOUR LITTLE CORNER</small>
+    </header>
+    <div class="section">FRIENDS <button id="addFriend" class="icon">＋</button></div>
+    <div id="friendList" class="people"></div>
+    <div class="section">FRIEND REQUESTS <span id="requestCount">0</span></div>
+    <div id="requestList" class="people"></div>
+    <div class="userbar">
+      <div id="myAvatar" class="avatar">Y</div>
+      <div class="who"><b id="myName"></b><small>● Online locally</small></div>
+      <button id="profileBtn" class="icon" title="Profile">⚙</button>
+      <button id="logoutBtn" class="icon" title="Log out">↪</button>
+    </div>
+  </aside>
+
+  <main class="main">
+    <section id="welcome" class="welcome">
+      <div class="star">✦</div>
+      <h2>Where the yap happens.</h2>
+      <p>Add friends and start chatting!</p>
+      <button id="welcomeAdd" class="primary">＋ Add a friend</button>
+    </section>
+    <section id="chatView" class="chat hidden">
+      <header class="chathead">
+        <div id="chatAvatar" class="avatar">?</div>
+        <div class="who"><b id="chatName"></b><small>Friend</small></div>
+        <button id="friendInfo" class="icon">ⓘ</button>
+      </header>
+      <div id="messages" class="messages"></div>
+      <form id="messageForm" class="composer">
+        <button type="button" id="gifBtn" class="gif">GIF</button>
+        <input id="messageInput" maxlength="2000"
+               placeholder="Message your friend..." required>
+        <button class="send">➤</button>
+      </form>
+      <p class="hint">Local browser chat · Not synced online</p>
+    </section>
+  </main>
+</div>
+
+<div id="modal" class="modal hidden">
+  <div class="modalbox">
+    <button id="closeModal" class="close">×</button>
+    <div id="modalContent"></div>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const load = key => {
+  try { return JSON.parse(localStorage.getItem(key)) || []; }
+  catch { return []; }
+};
+const save = (key, data) => localStorage.setItem(key, JSON.stringify(data));
+let mode = "login", me = null, active = null;
+let users = load("yapper_users");
+let requests = load("yapper_requests");
+let friendships = load("yapper_friendships");
+let messages = load("yapper_messages");
+let profiles = load("yapper_profiles");
+
+function safe(s="") {
+  return String(s).replace(/[&<>"']/g, c =>
+    ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+function avatar(u) {
+  const p = profiles[u] || {};
+  return p.avatar
+    ? `<img class="avatar" src="${p.avatar}" alt="">`
+    : `<div class="avatar">${safe(u[0] || "?").toUpperCase()}</div>`;
+}
+function setMode(m) {
+  mode = m;
+  $("loginTab").classList.toggle("active", m === "login");
+  $("registerTab").classList.toggle("active", m === "register");
+  $("email").classList.toggle("hidden", m !== "register");
+  $("emailLabel").classList.toggle("hidden", m !== "register");
+  $("email").required = m === "register";
+  $("authSubmit").textContent = m === "login" ? "Log in" : "Create account";
+  $("authError").textContent = "";
+}
+$("loginTab").onclick = () => setMode("login");
+$("registerTab").onclick = () => setMode("register");
+
+$("authForm").onsubmit = e => {
+  e.preventDefault();
+  const username = $("username").value.trim();
+  const password = $("password").value;
+  const email = $("email").value.trim().toLowerCase();
+
+  if (!/^[A-Za-z0-9_]{3,20}$/.test(username)) {
+    $("authError").textContent = "Use 3–20 letters, numbers or underscores.";
+    return;
+  }
+
+  if (mode === "register") {
+    if (users.some(u => u.username.toLowerCase() === username.toLowerCase())) {
+      $("authError").textContent = "Username already exists in this browser.";
+      return;
+    }
+    users.push({username, password, email});
+    save("yapper_users", users);
+    profiles[username] = {bio:"", avatar:"", banner:""};
+    save("yapper_profiles", profiles);
+  }
+
+  const user = users.find(u =>
+    u.username.toLowerCase() === username.toLowerCase() &&
+    u.password === password &&
+    (mode !== "login" || !u.email || u.email === email || $("email").classList.contains("hidden"))
+  );
+
+  if (!user) {
+    $("authError").textContent = "Account not found or password is incorrect.";
+    return;
+  }
+
+  me = user.username;
+  $("authView").classList.add("hidden");
+  $("appView").classList.remove("hidden");
+  $("myName").textContent = me;
+  $("myAvatar").outerHTML = avatar(me);
+  const myAv = document.querySelector(".userbar .avatar");
+  if (myAv) myAv.id = "myAvatar";
+  renderFriends();
+  renderRequests();
+};
+
+function pair(a,b) { return [a,b].sort().join("::"); }
+function areFriends(a,b) { return friendships.includes(pair(a,b)); }
+
+function renderFriends() {
+  const list = friendships
+    .filter(f => f.split("::").includes(me))
+    .map(f => f.split("::").find(u => u !== me));
+  $("friendList").innerHTML = list.map(u =>
+    `<button class="person ${active===u?"active":""}" data-user="${safe(u)}">
+      ${avatar(u)}<span><b>${safe(u)}</b><small>Direct message</small></span>
+    </button>`
+  ).join("") || '<p class="muted">No friends yet.</p>';
+  $("friendList").querySelectorAll("[data-user]").forEach(b =>
+    b.onclick = () => openChat(b.dataset.user));
+}
+function renderRequests() {
+  const incoming = requests.filter(r => r.to === me && r.status === "pending");
+  $("requestCount").textContent = incoming.length;
+  $("requestList").innerHTML = incoming.map(r =>
+    `<div class="result"><span>${safe(r.from)}</span>
+      <button class="primary" data-accept="${safe(r.from)}">Accept</button></div>`
+  ).join("") || '<p class="muted">No requests.</p>';
+  $("requestList").querySelectorAll("[data-accept]").forEach(b =>
+    b.onclick = () => acceptRequest(b.dataset.accept));
+}
+function showModal(html) {
+  $("modalContent").innerHTML = html;
+  $("modal").classList.remove("hidden");
+}
+function closeModal() { $("modal").classList.add("hidden"); }
+$("closeModal").onclick = closeModal;
+$("modal").onclick = e => { if (e.target === $("modal")) closeModal(); };
+$("addFriend").onclick = $("welcomeAdd").onclick = () => {
+  showModal(`<h2>Add a friend</h2>
+    <p class="muted">Search accounts saved in this browser.</p>
+    <label>Username</label><input id="findUser" placeholder="friend_username">
+    <button id="searchUser" class="primary">Search</button>
+    <div id="searchResults"></div>`);
+  $("searchUser").onclick = searchUser;
+};
+function searchUser() {
+  const name = $("findUser").value.trim();
+  const target = users.find(u => u.username.toLowerCase() === name.toLowerCase());
+  if (!target) {
+    $("searchResults").innerHTML = '<p class="muted">User not found in this browser.</p>';
+    return;
+  }
+  if (target.username === me) {
+    $("searchResults").textContent = "You cannot add yourself.";
+    return;
+  }
+  if (areFriends(me,target.username)) {
+    $("searchResults").textContent = "Already friends.";
+    return;
+  }
+  if (requests.some(r => r.from === me && r.to === target.username && r.status === "pending")) {
+    $("searchResults").textContent = "Request already sent.";
+    return;
+  }
+  $("searchResults").innerHTML =
+    `<div class="result"><span>${safe(target.username)}</span>
+    <button id="sendRequest" class="primary">Send request</button></div>`;
+  $("sendRequest").onclick = () => {
+    requests.push({from:me,to:target.username,status:"pending"});
+    save("yapper_requests",requests);
+    closeModal();
+    alert("Request saved locally. The other user must log in on this same browser.");
+  };
+}
+function acceptRequest(from) {
+  const r = requests.find(r => r.from === from && r.to === me && r.status === "pending");
+  if (!r) return;
+  r.status = "accepted";
+  friendships.push(pair(me,from));
+  save("yapper_requests",requests);
+  save("yapper_friendships",friendships);
+  renderRequests();
+  renderFriends();
+}
+function openChat(user) {
+  active = user;
+  $("welcome").classList.add("hidden");
+  $("chatView").classList.remove("hidden");
+  $("chatName").textContent = user;
+  $("chatAvatar").outerHTML = avatar(user);
+  const av = document.querySelector(".chathead .avatar");
+  if (av) av.id = "chatAvatar";
+  renderFriends();
+  renderMessages();
+}
+function renderMessages() {
+  const list = messages.filter(m => pair(m.from,m.to) === pair(me,active));
+  $("messages").innerHTML = list.map(m => {
+    const mine = m.from === me;
+    const body = m.kind === "gif"
+      ? `<img src="${safe(m.text)}" alt="GIF">`
+      : safe(m.text);
+    return `<div class="msg ${mine?"mine":""}">
+      ${avatar(m.from)}
+      <div><div class="meta">${safe(m.from)}</div>
+      <div class="bubble">${body}</div></div>
+    </div>`;
+  }).join("");
+  $("messages").scrollTop = $("messages").scrollHeight;
+}
+$("messageForm").onsubmit = e => {
+  e.preventDefault();
+  const text = $("messageInput").value.trim();
+  if (!text || !active) return;
+  messages.push({from:me,to:active,text,kind:"text"});
+  save("yapper_messages",messages);
+  $("messageInput").value = "";
+  renderMessages();
+};
+$("gifBtn").onclick = () => {
+  showModal(`<h2>Share a GIF</h2>
+    <p class="muted">Paste a direct image URL ending in .gif or .webp.</p>
+    <label>Image URL</label><input id="gifUrl" type="url" placeholder="https://example.com/funny.gif">
+    <button id="sendGif" class="primary">Send GIF</button>`);
+  $("sendGif").onclick = () => {
+    const url = $("gifUrl").value.trim();
+    if (!/^https?:\/\/\S+\.(gif|png|jpe?g|webp)(\?\S*)?$/i.test(url)) {
+      alert("Enter a direct image URL.");
+      return;
+    }
+    messages.push({from:me,to:active,text:url,kind:"gif"});
+    save("yapper_messages",messages);
+    closeModal();
+    renderMessages();
+  };
+};
+$("profileBtn").onclick = () => {
+  const p = profiles[me] || {};
+  showModal(`<h2>Your profile</h2>
+    <label>About me</label><input id="bio" maxlength="160" value="${safe(p.bio||"")}">
+    <label>Avatar image</label><input id="avatarFile" type="file" accept="image/*">
+    <label>Banner image</label><input id="bannerFile" type="file" accept="image/*">
+    <button id="saveProfile" class="primary">Save profile</button>`);
+  $("saveProfile").onclick = async () => {
+    try {
+      const read = file => new Promise((resolve,reject) => {
+        if (!file) return resolve(null);
+        if (file.size > 1_000_000) return reject(new Error("Choose an image under 1 MB."));
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      p.bio = $("bio").value.trim();
+      p.avatar = await read($("avatarFile").files[0]) || p.avatar || "";
+      p.banner = await read($("bannerFile").files[0]) || p.banner || "";
+      profiles[me] = p;
+      save("yapper_profiles",profiles);
+      $("myAvatar").outerHTML = avatar(me);
+      const myAv = document.querySelector(".userbar .avatar");
+      if (myAv) myAv.id = "myAvatar";
+      closeModal();
+    } catch (err) { alert(err.message); }
+  };
+};
+$("friendInfo").onclick = () => {
+  const p = profiles[active] || {};
+  showModal(`<h2>${safe(active)}</h2><p>${safe(p.bio||"No bio yet.")}</p>`);
+};
+$("logoutBtn").onclick = () => {
+  me = null;
+  active = null;
+  $("appView").classList.add("hidden");
+  $("authView").classList.remove("hidden");
+  $("chatView").classList.add("hidden");
+  $("welcome").classList.remove("hidden");
+  $("password").value = "";
+};
+</script>
+</body>
+</html>
